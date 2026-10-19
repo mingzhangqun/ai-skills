@@ -1,0 +1,71 @@
+# CIS 选型速查（RK 平台 Bayer RAW 支持矩阵）
+
+选新 sensor 前先过这张表（来源：RK 官方支持列表，2026-09 存档）。**选型五步**：
+① 板子 SoC 有没有对应接口 → ② 数据类型支持 → ③ 分辨率不超上限 → ④ HDR 需求 → ⑤ ISP 代际决定驱动参考和 IQ 文件能否复用。
+
+## 1. 支持接口
+
+**DVP 并口 (ITU BT.601/656)**：RK3576/RK3562/RK3588/RK3568/RK3566、RV1103/RV1106/RV1109/RV1126/RV1108、RK3399Pro/RK3288/RK3399/RK3326/RK1808/RK3368/RK3188/RK3066/RK3126…
+**DVP 并口 (ITU BT.1120)**：RK3576/RK3588/RK3568/RK3566/RK1808、RV1126B/RV1103/RV1106/RV1109/RV1126
+
+**MIPI DPHY CSI-2**（版本越高带宽越大）：
+- Spec **v2.0**：RK3576 / RK3588
+- Spec **v1.2**：RK3572/RK3576/RK3588/RK3568/RK3566、RV1126B/RV1103B/RV1103/RV1106/RV1109/RV1126
+- Spec **v1.1**：RK3288/RK3399/RK3326/RK1808/RK3399Pro
+- Spec **v1.0**：RK3368/RV1108
+
+**MIPI CPHY CSI-2**：RK3576 / RK3588
+**LVDS**：RV1106/RV1109/RV1126/RV1126B
+
+## 2. 数据类型
+
+- **YUV**：几乎所有（RK3576/RK3562/RK3588/RK3568/RK3566/RK3399Pro/RK3288/RK3399/RK3326/RK1808/RK3368/RK3188/RK3066/RK3126、RV1103B/RV1103/RV1106/RV1109/RV1126/RV1108）
+- **Bayer RAW**：RK3572/RK3576/RK3562/RK3588/RK3568/RK3566/RK3288/RK3399/RK3368/RK3326/RK1808/RK3399Pro、RV1126B/RV1103B/RV1103/RV1106/RV1109/RV1126/RV1108
+- **PWL / LUT Companding 等压缩数据**：仅 RK3576
+
+## 3. Bayer RAW 最大输入分辨率
+
+| 上限 | 分辨率 | SoC |
+|---|---|---|
+| 48M 4:3 | 8064x6048 | RK3576 / RK3588 |
+| 14M 4:3 | 4416x3312 | RV1126 / RK3288 / RK3399 |
+| 13M 4:3 | 4224x3136 | RK3562 |
+| 12M 4:3 | 4096x3072 | RK3572 / RV1126B / RK3566 / RK3568 |
+| 8M 4:3 | 3264x2448 | RK3326 / RV1108 / RK3368 |
+| 5.3M 16:9 | 3072x1728 | RV1106 / RV1109 |
+| 4.6M 16:9 | 2880x1620 | RV1103B |
+| 2M 16:9 | 1920x1080 | RK1808 |
+
+注意：这是 ISP 输入上限；sensor 输出再大也会被裁/缩（也影响 HDR 模式下的多帧带宽）。
+
+## 4. DCG/DAG/DOL(Staggered) HDR 支持
+
+- **HDR 2 帧**：RK3572/RK3562/RK3568、RV1126B/RV1103B/RV1103/RV1106/RV1109
+- **HDR 3 帧**：RK3576/RK3588、RV1126
+
+## 5. ISP 迭代与兼容性（选参考驱动/IQ 文件的依据）
+
+| ISP 代 | SoC |
+|---|---|
+| ISP1.X | RK3288/RK3399/RK3368/RK3326/RV1108/RK1808/RK3399Pro |
+| ISP2.0 | RV1109/RV1126 |
+| ISP2.1 | RK3568/RK3566 |
+| ISP3.0 | RK3588 |
+| ISP3.2 | RV1106/RV1103 |
+| ISP3.2lite | RK3562 |
+| ISP3.3 | RV1103B |
+| ISP3.5 | RV1126B |
+| ISP3.51 | RK3572 |
+| ISP3.9 | RK3576 |
+
+**兼容性规则（官方）**：
+- **CIS 驱动**：ISP2.0 ~ ISP3.2lite 之间互相兼容；ISP1.X 之间互相兼容
+- **ISP 效果参数（IQ 文件）**：ISP1.X 之间互相兼容；**ISP2.0 ~ ISP3.9 互不兼容**
+
+实战印证（devkit3588 上踩过）：isp39 的 IQ 文件给 ISP30 的板 → rkaiq init 段空指针 SIGSEGV。**移植 IQ 前先对照本表核代际**。
+
+## 与其他 reference 的关系
+
+- 代际定了 → 移植驱动选参考型号看 `driver-porting.md`（驱动兼容表 + SDK 里找现成驱动）
+- 接口定了 → DTS 链路模板看 `dts-reference.md`（DPHY 版本影响 data-lanes/带宽预算）
+- 芯片→ISP→iqfiles 目录映射见 `iqfile-guide.md`

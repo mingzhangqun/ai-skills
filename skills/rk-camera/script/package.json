@@ -1,0 +1,10 @@
+{
+  "name": "rkcam-console",
+  "version": "0.1.0",
+  "private": true,
+  "description": "rk-camera skill 自带 webui 控制台（单文件产物）: npm i (sharp/ssh2, 原生二进制不入包) 后 node rkcam-console.js; 开发态源码+构建器在 ../webui/",
+  "dependencies": {
+    "sharp": "^0.35.5",
+    "ssh2": "^1.17.0"
+  }
+}
